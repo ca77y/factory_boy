@@ -26,6 +26,19 @@ class FakeDjangoModel:
             self.id = None
 
 
+class FakeAsyncModel:
+    @classmethod
+    async def create(cls, **kwargs):
+        instance = cls(**kwargs)
+        instance.id = 1
+        return instance
+
+    def __init__(self, **kwargs):
+        self.id = None
+        for name, value in kwargs.items():
+            setattr(self, name, value)
+
+
 class FakeModelFactory(base.Factory):
     class Meta:
         abstract = True
@@ -34,8 +47,16 @@ class FakeModelFactory(base.Factory):
     def _create(cls, model_class, *args, **kwargs):
         return model_class.create(**kwargs)
 
+    @classmethod
+    async def _create_model_async(cls, model_class, *args, **kwargs):
+        return await model_class.create(*args, **kwargs)
+
 
 class TestModel(FakeDjangoModel):
+    pass
+
+
+class AsyncTestModel(FakeAsyncModel):
     pass
 
 
@@ -361,7 +382,7 @@ class FactorySequenceTestCase(unittest.TestCase):
         self.assertEqual(1, o4.one)
 
 
-class FactoryDefaultStrategyTestCase(unittest.TestCase):
+class FactoryDefaultStrategyTestCase(unittest.IsolatedAsyncioTestCase):
     def test_build_strategy(self):
         class TestModelFactory(base.Factory):
             class Meta:
@@ -386,6 +407,39 @@ class FactoryDefaultStrategyTestCase(unittest.TestCase):
         test_model = TestModelFactory()
         self.assertEqual(test_model.one, 'one')
         self.assertTrue(test_model.id)
+
+    async def test_async_create_strategy(self):
+        class TestModelFactory(base.Factory):
+            class Meta:
+                model = AsyncTestModel
+                strategy = enums.ASYNC_CREATE_STRATEGY
+
+            one = 'one'
+
+            @classmethod
+            async def _create_model_async(cls, model_class, *args, **kwargs):
+                return await model_class.create(*args, **kwargs)
+
+        test_model = await TestModelFactory()
+        self.assertEqual(test_model.one, 'one')
+        self.assertTrue(test_model.id)
+
+    async def test_async_create_strategy_default(self):
+        # Async create is default strategy for AsyncFactory
+
+        class TestModelAsyncFactory(base.AsyncFactory):
+            class Meta:
+                model = AsyncTestModel
+
+            one = 'one'
+
+            @classmethod
+            async def _create_model_async(cls, model_class, *args, **kwargs):
+                return await model_class.create(*args, **kwargs)
+
+        test_model = await TestModelAsyncFactory()
+        self.assertEqual(test_model.one, 'one')
+        self.assertEqual(test_model.id, 1)
 
     def test_stub_strategy(self):
         class TestModelFactory(base.Factory):
@@ -417,6 +471,18 @@ class FactoryDefaultStrategyTestCase(unittest.TestCase):
                 strategy = enums.CREATE_STRATEGY
 
             one = 'one'
+
+        with self.assertRaises(base.StubFactory.UnsupportedStrategy):
+            TestModelFactory()
+
+    def test_stub_with_create_async_strategy(self):
+        class TestModelFactory(base.StubFactory):
+            class Meta:
+                model = TestModel
+
+            one = 'one'
+
+        TestModelFactory._meta.strategy = enums.ASYNC_CREATE_STRATEGY
 
         with self.assertRaises(base.StubFactory.UnsupportedStrategy):
             TestModelFactory()
