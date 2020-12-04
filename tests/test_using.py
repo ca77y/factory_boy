@@ -1,8 +1,7 @@
 # Copyright: See the LICENSE file.
 
 """Tests using factory."""
-
-
+import asyncio
 import collections
 import datetime
 import os
@@ -139,7 +138,7 @@ class AsyncTestModel(FakeAsyncModel):
     pass
 
 
-class SimpleBuildTestCase(unittest.IsolatedAsyncioTestCase):
+class SimpleBuildTestCase(unittest.TestCase):
     """Tests the minimalist 'factory.build/create' functions."""
 
     def test_build(self):
@@ -208,18 +207,22 @@ class SimpleBuildTestCase(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(obj.id, 2)
             self.assertEqual(obj.foo, 'bar')
 
-    async def test_create_async(self):
-        obj = await factory.create_async(FakeAsyncModel, foo='bar')
+    def test_create_async(self):
+        loop = asyncio.get_event_loop()
+        obj = loop.run_until_complete(factory.create_async(FakeAsyncModel, foo='bar'))
         self.assertEqual(obj.id, None)
         self.assertEqual(obj.foo, 'bar')
 
-    async def test_create_async_custom_base(self):
-        obj = await factory.create_async(FakeAsyncModel, foo='bar', FACTORY_CLASS=FakeAsyncModelFactory)
+    def test_create_async_custom_base(self):
+        loop = asyncio.get_event_loop()
+        obj = loop.run_until_complete(
+            factory.create_async(FakeAsyncModel, foo='bar', FACTORY_CLASS=FakeAsyncModelFactory))
         self.assertEqual(obj.id, 2)
         self.assertEqual(obj.foo, 'bar')
 
-    async def test_create_async_batch(self):
-        objs = await factory.create_async_batch(FakeAsyncModel, 4, foo='bar')
+    def test_create_async_batch(self):
+        loop = asyncio.get_event_loop()
+        objs = loop.run_until_complete(factory.create_async_batch(FakeAsyncModel, 4, foo='bar'))
 
         self.assertEqual(4, len(objs))
         self.assertEqual(4, len(set(objs)))
@@ -228,13 +231,14 @@ class SimpleBuildTestCase(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(obj.id, None)
             self.assertEqual(obj.foo, 'bar')
 
-    async def test_create_async_batch_custom_base(self):
-        objs = await factory.create_async_batch(
+    def test_create_async_batch_custom_base(self):
+        loop = asyncio.get_event_loop()
+        objs = loop.run_until_complete(factory.create_async_batch(
             FakeAsyncModel,
             4,
             foo='bar',
             FACTORY_CLASS=FakeAsyncModelFactory,
-        )
+        ))
 
         self.assertEqual(4, len(objs))
         self.assertEqual(4, len(set(objs)))
@@ -278,18 +282,20 @@ class SimpleBuildTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(obj.id, 2)
         self.assertEqual(obj.foo, 'bar')
 
-    async def test_generate_create_async(self):
-        obj = await factory.generate(FakeAsyncModel, factory.ASYNC_CREATE_STRATEGY, foo='bar')
+    def test_generate_create_async(self):
+        loop = asyncio.get_event_loop()
+        obj = loop.run_until_complete(factory.generate(FakeAsyncModel, factory.ASYNC_CREATE_STRATEGY, foo='bar'))
         self.assertEqual(obj.id, None)
         self.assertEqual(obj.foo, 'bar')
 
-    async def test_generate_create_async_custom_base(self):
-        obj = await factory.generate(
+    def test_generate_create_async_custom_base(self):
+        loop = asyncio.get_event_loop()
+        obj = loop.run_until_complete(factory.generate(
             FakeAsyncModel,
             factory.ASYNC_CREATE_STRATEGY,
             foo='bar',
             FACTORY_CLASS=FakeAsyncModelFactory,
-        )
+        ))
         self.assertEqual(obj.id, 2)
         self.assertEqual(obj.foo, 'bar')
 
@@ -334,8 +340,10 @@ class SimpleBuildTestCase(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(obj.id, 2)
             self.assertEqual(obj.foo, 'bar')
 
-    async def test_generate_batch_create_async(self):
-        objs = await factory.generate_batch(FakeAsyncModel, factory.ASYNC_CREATE_STRATEGY, 20, foo='bar')
+    def test_generate_batch_create_async(self):
+        loop = asyncio.get_event_loop()
+        objs = loop.run_until_complete(
+            factory.generate_batch(FakeAsyncModel, factory.ASYNC_CREATE_STRATEGY, 20, foo='bar'))
 
         self.assertEqual(20, len(objs))
         self.assertEqual(20, len(set(objs)))
@@ -344,14 +352,15 @@ class SimpleBuildTestCase(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(obj.id, None)
             self.assertEqual(obj.foo, 'bar')
 
-    async def test_generate_batch_create_async_custom_base(self):
-        objs = await factory.generate_batch(
+    def test_generate_batch_create_async_custom_base(self):
+        loop = asyncio.get_event_loop()
+        objs = loop.run_until_complete(factory.generate_batch(
             FakeAsyncModel,
             factory.ASYNC_CREATE_STRATEGY,
             20,
             foo='bar',
             FACTORY_CLASS=FakeAsyncModelFactory,
-        )
+        ))
 
         self.assertEqual(20, len(objs))
         self.assertEqual(20, len(set(objs)))
@@ -450,7 +459,7 @@ class SimpleBuildTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual({'one': 'one', 'two': 'oneone'}, obj)
 
 
-class UsingFactoryTestCase(unittest.IsolatedAsyncioTestCase):
+class UsingFactoryTestCase(unittest.TestCase):
     def test_attribute(self):
         class TestObjectFactory(factory.Factory):
             class Meta:
@@ -668,7 +677,7 @@ class UsingFactoryTestCase(unittest.IsolatedAsyncioTestCase):
         test_model = TestModel2Factory()
         self.assertEqual(4, test_model.two.three)
 
-    async def test_self_attribute_parent_async(self):
+    def test_self_attribute_parent_async(self):
         class Book(FakeAsyncModel):
             pass
 
@@ -698,7 +707,9 @@ class UsingFactoryTestCase(unittest.IsolatedAsyncioTestCase):
             chapter = factory.SubFactory(ChapterFactory, author=factory.SelfAttribute('..author'))
             preface = factory.SubFactory(ChapterFactory)
 
-        book = await BookFactory()
+        loop = asyncio.get_event_loop()
+        book = loop.run_until_complete(BookFactory())
+
         self.assertEqual(book.author, book.chapter.author)
         self.assertEqual("Toronto", book.author.hometown)
         self.assertEqual("Paris", book.preface.author.hometown)
@@ -784,25 +795,27 @@ class UsingFactoryTestCase(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(i, obj.two)
             self.assertTrue(obj.id)
 
-    async def test_create_async(self):
+    def test_create_async(self):
         class TestModelFactory(FakeModelFactory):
             class Meta:
                 model = AsyncTestModel
 
             one = 'one'
 
-        test_model = await TestModelFactory.create_async()
+        loop = asyncio.get_event_loop()
+        test_model = loop.run_until_complete(TestModelFactory.create_async())
         self.assertEqual(test_model.one, 'one')
         self.assertTrue(2, test_model.id)
 
-    async def test_create_batch_async(self):
+    def test_create_batch_async(self):
         class TestModelFactory(FakeModelFactory):
             class Meta:
                 model = AsyncTestModel
 
             one = 'one'
 
-        objs = await TestModelFactory.create_async_batch(20, two=factory.Sequence(int))
+        loop = asyncio.get_event_loop()
+        objs = loop.run_until_complete(TestModelFactory.create_async_batch(20, two=factory.Sequence(int)))
 
         self.assertEqual(20, len(objs))
         self.assertEqual(20, len(set(objs)))
@@ -834,14 +847,15 @@ class UsingFactoryTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(test_model.one, 'one')
         self.assertTrue(test_model.id)
 
-    async def test_generate_create_async(self):
+    def test_generate_create_async(self):
         class TestModelAsyncFactory(FakeAsyncModelFactory):
             class Meta:
                 model = AsyncTestModel
 
             one = 'one'
 
-        test_model = await TestModelAsyncFactory.generate(factory.ASYNC_CREATE_STRATEGY)
+        loop = asyncio.get_event_loop()
+        test_model = loop.run_until_complete(TestModelAsyncFactory.generate(factory.ASYNC_CREATE_STRATEGY))
         self.assertEqual(test_model.one, 'one')
         self.assertEqual(test_model.id, 2)
 
@@ -890,14 +904,15 @@ class UsingFactoryTestCase(unittest.IsolatedAsyncioTestCase):
             self.assertEqual('two', obj.two)
             self.assertTrue(obj.id)
 
-    async def test_generate_batch_create_async(self):
+    def test_generate_batch_create_async(self):
         class TestModelFactory(FakeModelFactory):
             class Meta:
                 model = AsyncTestModel
 
             one = 'one'
 
-        objs = await TestModelFactory.generate_batch(factory.ASYNC_CREATE_STRATEGY, 20, two='two')
+        loop = asyncio.get_event_loop()
+        objs = loop.run_until_complete(TestModelFactory.generate_batch(factory.ASYNC_CREATE_STRATEGY, 20, two='two'))
 
         self.assertEqual(20, len(objs))
         self.assertEqual(20, len(set(objs)))
@@ -1258,7 +1273,7 @@ class UsingFactoryTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual({'t': 4}, obj.kwargs)
 
 
-class NonKwargParametersTestCase(unittest.IsolatedAsyncioTestCase):
+class NonKwargParametersTestCase(unittest.TestCase):
     def test_build(self):
         class TestObject:
             def __init__(self, *args, **kwargs):
@@ -1308,7 +1323,7 @@ class NonKwargParametersTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((1, 2), obj.args)
         self.assertEqual({'three': 3}, obj.kwargs)
 
-    async def test_create_async(self):
+    def test_create_async(self):
         class TestObject:
             def __init__(self, *args, **kwargs):
                 self.args = None
@@ -1334,7 +1349,8 @@ class NonKwargParametersTestCase(unittest.IsolatedAsyncioTestCase):
             async def _create_model_async(cls, model_class, *args, **kwargs):
                 return await model_class.create(*args, **kwargs)
 
-        obj = await TestObjectFactory.create_async()
+        loop = asyncio.get_event_loop()
+        obj = loop.run_until_complete(TestObjectFactory.create_async())
         self.assertEqual((1, 2), obj.args)
         self.assertEqual({'three': 3}, obj.kwargs)
 
@@ -1713,7 +1729,7 @@ class TraitTestCase(unittest.TestCase):
         self.assertEqual({5: p}, PRICES)
 
 
-class SubFactoryTestCase(unittest.IsolatedAsyncioTestCase):
+class SubFactoryTestCase(unittest.TestCase):
     def test_sub_factory(self):
         class TestModel2(FakeModel):
             pass
@@ -1733,7 +1749,7 @@ class SubFactoryTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(1, test_model.id)
         self.assertEqual(1, test_model.two.id)
 
-    async def test_subfactory_async(self):
+    def test_subfactory_async(self):
         class FakeAsyncModel2(FakeAsyncModel):
             pass
 
@@ -1753,7 +1769,8 @@ class SubFactoryTestCase(unittest.IsolatedAsyncioTestCase):
             two = factory.SubFactory(TestAsyncModelFactory, one=1)
             three = factory.SubFactory(TestSyncModelFactory, zero=0)
 
-        test_model = await TestAsyncModel2Factory(two__one=4, three__zero=7)
+        loop = asyncio.get_event_loop()
+        test_model = loop.run_until_complete(TestAsyncModel2Factory(two__one=4, three__zero=7))
         self.assertEqual(4, test_model.two.one)
         self.assertEqual(7, test_model.three.zero)
         self.assertEqual(2, test_model.id)

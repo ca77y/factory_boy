@@ -533,7 +533,7 @@ class BaseFactory:
 
         # A Task can be awaited multiple times, unlike a coroutine.
         # Useful when a factory and a subfactory must share the same object.
-        return asyncio.create_task(maker_coroutine())
+        return asyncio.ensure_future(maker_coroutine())
 
     @classmethod
     async def _create_model_async(cls, model_class, *args, **kwargs):

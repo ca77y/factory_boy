@@ -1,5 +1,5 @@
 # Copyright: See the LICENSE file.
-
+import asyncio
 import unittest
 
 from factory import base, declarations, enums, errors
@@ -382,7 +382,7 @@ class FactorySequenceTestCase(unittest.TestCase):
         self.assertEqual(1, o4.one)
 
 
-class FactoryDefaultStrategyTestCase(unittest.IsolatedAsyncioTestCase):
+class FactoryDefaultStrategyTestCase(unittest.TestCase):
     def test_build_strategy(self):
         class TestModelFactory(base.Factory):
             class Meta:
@@ -408,7 +408,7 @@ class FactoryDefaultStrategyTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(test_model.one, 'one')
         self.assertTrue(test_model.id)
 
-    async def test_async_create_strategy(self):
+    def test_async_create_strategy(self):
         class TestModelFactory(base.Factory):
             class Meta:
                 model = AsyncTestModel
@@ -420,11 +420,12 @@ class FactoryDefaultStrategyTestCase(unittest.IsolatedAsyncioTestCase):
             async def _create_model_async(cls, model_class, *args, **kwargs):
                 return await model_class.create(*args, **kwargs)
 
-        test_model = await TestModelFactory()
+        loop = asyncio.get_event_loop()
+        test_model = loop.run_until_complete(TestModelFactory())
         self.assertEqual(test_model.one, 'one')
         self.assertTrue(test_model.id)
 
-    async def test_async_create_strategy_default(self):
+    def test_async_create_strategy_default(self):
         # Async create is default strategy for AsyncFactory
 
         class TestModelAsyncFactory(base.AsyncFactory):
@@ -437,7 +438,8 @@ class FactoryDefaultStrategyTestCase(unittest.IsolatedAsyncioTestCase):
             async def _create_model_async(cls, model_class, *args, **kwargs):
                 return await model_class.create(*args, **kwargs)
 
-        test_model = await TestModelAsyncFactory()
+        loop = asyncio.get_event_loop()
+        test_model = loop.run_until_complete(TestModelAsyncFactory())
         self.assertEqual(test_model.one, 'one')
         self.assertEqual(test_model.id, 1)
 
@@ -485,7 +487,8 @@ class FactoryDefaultStrategyTestCase(unittest.IsolatedAsyncioTestCase):
         TestModelFactory._meta.strategy = enums.ASYNC_CREATE_STRATEGY
 
         with self.assertRaises(base.StubFactory.UnsupportedStrategy):
-            TestModelFactory()
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(TestModelFactory())
 
     def test_stub_with_build_strategy(self):
         class TestModelFactory(base.StubFactory):

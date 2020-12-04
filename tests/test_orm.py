@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 
 import factory
@@ -13,7 +14,7 @@ class NoteFactory(OrmModelFactory):
     completed = factory.Faker('boolean')
 
 
-class ORMTestCase(unittest.IsolatedAsyncioTestCase):
+class ORMTestCase(unittest.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -25,12 +26,17 @@ class ORMTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIn(note.completed, [True, False])
         self.assertIsNone(note.id)
 
-    async def test_creation(self):
-        async with models.database:
-            note = await NoteFactory.create_async()
+    def test_creation(self):
+        loop = asyncio.get_event_loop()
+
+        async def test():
+            async with models.database:
+                note = await NoteFactory.create_async()
+                count = await models.Note.objects.filter(text__contains="Text").count()
+
             self.assertEqual('Text 0', note.text)
             self.assertIn(note.completed, [True, False])
             self.assertIsNotNone(note.id)
+            self.assertEqual(count, 1)
 
-            count = await models.Note.objects.filter(text__contains="Text").count()
-            assert count == 1
+        loop.run_until_complete(test())
