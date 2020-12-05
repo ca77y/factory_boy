@@ -6,7 +6,9 @@ ChangeLog
 3.2.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+*New:*
+
+    - Add support for asynchronous factories
 
 
 3.2.0 (2020-12-28)

@@ -328,7 +328,7 @@ All factories support three built-in strategies:
 
 * ``build`` provides a local object
 * ``create`` instantiates a local object, and saves it to the database.
-* ``create async`` similar to create but can run asynchronous code.
+* ``create async`` similar to ``create`` but can run asynchronous code.
 
 .. note:: For 1.X versions, the ``create`` will actually call ``AssociatedClass.objects.create``,
           as for a Django model.
@@ -382,7 +382,7 @@ Then, you can then either:
 .. code-block:: python
 
     class MyFactory(factory.AsyncFactory):
-        ...
+        # ...
 
         @classmethod
         async def _create_model_async(cls, model_class, *args, **kwargs):
