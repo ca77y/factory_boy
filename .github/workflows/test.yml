@@ -19,9 +19,9 @@ jobs:
           - 3.9
           - pypy3
         tox-environment:
-          - django22-alchemy-mongoengine
-          - django30-alchemy-mongoengine
-          - django31-alchemy-mongoengine
+          - django22-alchemy-mongoengine-orm
+          - django30-alchemy-mongoengine-orm
+          - django31-alchemy-mongoengine-orm
 
     services:
       mongodb:
