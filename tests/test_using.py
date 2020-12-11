@@ -88,12 +88,17 @@ class FakeModel:
             self.id = None
 
 
+# A unique marker used in tests to assert create function was called.
+create_marker = object()
+
+
 class FakeAsyncModel:
+
     @classmethod
     async def create(cls, **kwargs):
         instance = cls(**kwargs)
         if not instance.id:
-            instance.id = 2
+            instance.id = create_marker
         return instance
 
     def __init__(self, **kwargs):
@@ -217,7 +222,7 @@ class SimpleBuildTestCase(unittest.TestCase):
         loop = asyncio.get_event_loop()
         obj = loop.run_until_complete(
             factory.create_async(FakeAsyncModel, foo='bar', FACTORY_CLASS=FakeAsyncModelFactory))
-        self.assertEqual(obj.id, 2)
+        self.assertEqual(obj.id, create_marker)
         self.assertEqual(obj.foo, 'bar')
 
     def test_create_async_batch(self):
@@ -244,7 +249,7 @@ class SimpleBuildTestCase(unittest.TestCase):
         self.assertEqual(4, len(set(objs)))
 
         for obj in objs:
-            self.assertEqual(obj.id, 2)
+            self.assertEqual(obj.id, create_marker)
             self.assertEqual(obj.foo, 'bar')
 
     def test_stub(self):
@@ -296,7 +301,7 @@ class SimpleBuildTestCase(unittest.TestCase):
             foo='bar',
             FACTORY_CLASS=FakeAsyncModelFactory,
         ))
-        self.assertEqual(obj.id, 2)
+        self.assertEqual(obj.id, create_marker)
         self.assertEqual(obj.foo, 'bar')
 
     def test_generate_stub(self):
@@ -366,7 +371,7 @@ class SimpleBuildTestCase(unittest.TestCase):
         self.assertEqual(20, len(set(objs)))
 
         for obj in objs:
-            self.assertEqual(obj.id, 2)
+            self.assertEqual(obj.id, create_marker)
             self.assertEqual(obj.foo, 'bar')
 
     def test_generate_batch_stub(self):
@@ -713,13 +718,11 @@ class UsingFactoryTestCase(unittest.TestCase):
         self.assertEqual(book.author, book.chapter.author)
         self.assertEqual("Toronto", book.author.hometown)
         self.assertEqual("Paris", book.preface.author.hometown)
-        self.assertEqual(2, book.id)
-        self.assertEqual(2, book.author.id)
-        self.assertEqual("Toronto", book.author.hometown)
-        self.assertEqual(2, book.chapter.id)
-        self.assertEqual(2, book.preface.id)
-        self.assertEqual(2, book.preface.author.id)
-        self.assertEqual("Paris", book.preface.author.hometown)
+        self.assertEqual(create_marker, book.id)
+        self.assertEqual(create_marker, book.author.id)
+        self.assertEqual(create_marker, book.chapter.id)
+        self.assertEqual(create_marker, book.preface.id)
+        self.assertEqual(create_marker, book.preface.author.id)
 
     def test_sequence_decorator(self):
         class TestObjectFactory(factory.Factory):
@@ -805,7 +808,7 @@ class UsingFactoryTestCase(unittest.TestCase):
         loop = asyncio.get_event_loop()
         test_model = loop.run_until_complete(TestModelFactory.create_async())
         self.assertEqual(test_model.one, 'one')
-        self.assertTrue(2, test_model.id)
+        self.assertTrue(create_marker, test_model.id)
 
     def test_create_batch_async(self):
         class TestModelFactory(FakeModelFactory):
@@ -857,7 +860,7 @@ class UsingFactoryTestCase(unittest.TestCase):
         loop = asyncio.get_event_loop()
         test_model = loop.run_until_complete(TestModelAsyncFactory.generate(factory.ASYNC_CREATE_STRATEGY))
         self.assertEqual(test_model.one, 'one')
-        self.assertEqual(test_model.id, 2)
+        self.assertEqual(test_model.id, create_marker)
 
     def test_generate_stub(self):
         class TestModelFactory(FakeModelFactory):
@@ -1773,8 +1776,8 @@ class SubFactoryTestCase(unittest.TestCase):
         test_model = loop.run_until_complete(TestAsyncModel2Factory(two__one=4, three__zero=7))
         self.assertEqual(4, test_model.two.one)
         self.assertEqual(7, test_model.three.zero)
-        self.assertEqual(2, test_model.id)
-        self.assertEqual(2, test_model.two.id)
+        self.assertEqual(create_marker, test_model.id)
+        self.assertEqual(create_marker, test_model.two.id)
         self.assertEqual(1, test_model.three.id)
 
     def test_sub_factory_with_lazy_fields(self):
