@@ -212,9 +212,11 @@ class SimpleBuildTestCase(unittest.TestCase):
             self.assertEqual(obj.id, 2)
             self.assertEqual(obj.foo, 'bar')
 
-    def test_create_async(self):
+    def test_create_async_default_base(self):
+        # By default Factory class is used to create the factory
         loop = asyncio.get_event_loop()
         obj = loop.run_until_complete(factory.create_async(FakeAsyncModel, foo='bar'))
+        # FakeAsyncModel.create was not called
         self.assertEqual(obj.id, None)
         self.assertEqual(obj.foo, 'bar')
 

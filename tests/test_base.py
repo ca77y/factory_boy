@@ -423,10 +423,10 @@ class FactoryDefaultStrategyTestCase(unittest.TestCase):
         loop = asyncio.get_event_loop()
         test_model = loop.run_until_complete(TestModelFactory())
         self.assertEqual(test_model.one, 'one')
-        self.assertTrue(test_model.id)
+        self.assertEqual(test_model.id, 1)
 
     def test_async_create_strategy_default(self):
-        # Async create is default strategy for AsyncFactory
+        # ASYNC_CREATE_STRATEGY is default strategy for AsyncFactory
 
         class TestModelAsyncFactory(base.AsyncFactory):
             class Meta:

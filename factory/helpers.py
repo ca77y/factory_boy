@@ -62,9 +62,9 @@ def create_batch(klass, size, **kwargs):
     return make_factory(klass, **kwargs).create_batch(size)
 
 
-def create_async(klass, **kwargs):
-    """Create a factory for the given class, and create a Task that can create an instance."""
-    return make_factory(klass, **kwargs).create_async()
+async def create_async(klass, **kwargs):
+    """Create a factory for the given class, and create a Task to create an instance."""
+    return await make_factory(klass, **kwargs).create_async()
 
 
 async def create_async_batch(klass, size, **kwargs):
