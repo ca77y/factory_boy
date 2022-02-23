@@ -3,6 +3,11 @@ ChangeLog
 
 .. Note for v4.x: don't forget to check "Deprecated" sections for removal.
 
+3.3.1 (tomek)
+------------------
+
+- Add support for asynchronous factories
+
 3.3.0 (unreleased)
 ------------------
 
