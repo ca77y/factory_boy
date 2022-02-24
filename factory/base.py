@@ -781,12 +781,30 @@ class BaseListFactory(Factory):
         return model_class(values)
 
     @classmethod
+    async def _build_async(cls, model_class, *args, **kwargs):
+        if args:
+            raise ValueError(
+                "ListFactory %r does not support Meta.inline_args." % cls)
+
+        # kwargs are constructed from a list, their insertion order matches the list
+        # order, no additional sorting is required.
+        values = kwargs.values()
+        resolved_values = []
+        for value in values:
+            if inspect.isawaitable(value):
+                res = await value
+                resolved_values.append(res)
+            else:
+                resolved_values.append(value)
+        return model_class(resolved_values)
+
+    @classmethod
     def _create(cls, model_class, *args, **kwargs):
         return cls._build(model_class, *args, **kwargs)
 
     @classmethod
     async def _create_async(cls, model_class, *args, **kwargs):
-        return cls._build(model_class, *args, **kwargs)
+        return await cls._build_async(model_class, *args, **kwargs)
 
 
 class ListFactory(BaseListFactory):
